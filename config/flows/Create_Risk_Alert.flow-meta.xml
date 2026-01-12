@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <description>Creates a risk alert when portfolio metrics exceed defined thresholds. Triggered from dashboard or Concierge AI.</description>
+    <label>Create Risk Alert</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+    </start>
+    <status>Active</status>
+    
+    <!-- Input Variables -->
+    <variables>
+        <name>varPortfolioId</name>
+        <dataType>String</dataType>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <label>Portfolio ID</label>
+    </variables>
+    
+    <variables>
+        <name>varMetricName</name>
+        <dataType>String</dataType>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <label>Metric Name</label>
+    </variables>
+    
+    <variables>
+        <name>varCurrentValue</name>
+        <dataType>Number</dataType>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <label>Current Value</label>
+        <scale>4</scale>
+    </variables>
+    
+    <variables>
+        <name>varThresholdValue</name>
+        <dataType>Number</dataType>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <label>Threshold Value</label>
+        <scale>4</scale>
+    </variables>
+    
+    <variables>
+        <name>varAlertType</name>
+        <dataType>String</dataType>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <label>Alert Type</label>
+    </variables>
+    
+    <variables>
+        <name>varSeverity</name>
+        <dataType>String</dataType>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <label>Severity</label>
+    </variables>
+    
+    <variables>
+        <name>varAssetSymbol</name>
+        <dataType>String</dataType>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <label>Asset Symbol</label>
+    </variables>
+    
+    <!-- Output Variable -->
+    <variables>
+        <name>varAlertId</name>
+        <dataType>String</dataType>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+        <label>Created Alert ID</label>
+    </variables>
+    
+    <!-- Step 1: Decision - Check if threshold exceeded -->
+    <decisions>
+        <name>Check_Threshold_Exceeded</name>
+        <label>Check Threshold Exceeded</label>
+        <locationX>176</locationX>
+        <locationY>134</locationY>
+        <defaultConnectorLabel>Threshold Not Exceeded</defaultConnectorLabel>
+        <rules>
+            <name>Threshold_Exceeded</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>varCurrentValue</leftValueReference>
+                <operator>GreaterThan</operator>
+                <rightValue>
+                    <elementReference>varThresholdValue</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_Risk_Alert_Record</targetReference>
+            </connector>
+            <label>Threshold Exceeded</label>
+        </rules>
+    </decisions>
+    
+    <!-- Step 2: Create Risk Alert Record -->
+    <recordCreates>
+        <name>Create_Risk_Alert_Record</name>
+        <label>Create Risk Alert Record</label>
+        <locationX>176</locationX>
+        <locationY>278</locationY>
+        <assignRecordIdToReference>varAlertId</assignRecordIdToReference>
+        <connector>
+            <targetReference>Send_Email_Notification</targetReference>
+        </connector>
+        <object>Risk_Alert__c</object>
+        <inputAssignments>
+            <field>Portfolio__c</field>
+            <value>
+                <elementReference>varPortfolioId</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Alert_Type__c</field>
+            <value>
+                <elementReference>varAlertType</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Severity__c</field>
+            <value>
+                <elementReference>varSeverity</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Asset_Symbol__c</field>
+            <value>
+                <elementReference>varAssetSymbol</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Metric_Name__c</field>
+            <value>
+                <elementReference>varMetricName</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Current_Value__c</field>
+            <value>
+                <elementReference>varCurrentValue</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Threshold_Value__c</field>
+            <value>
+                <elementReference>varThresholdValue</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Status__c</field>
+            <value>
+                <stringValue>Active</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Priority__c</field>
+            <value>
+                <numberValue>1.0</numberValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Description__c</field>
+            <value>
+                <stringValue>Risk alert triggered: {!varMetricName} value of {!varCurrentValue} exceeds threshold of {!varThresholdValue}</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Recommended_Action__c</field>
+            <value>
+                <stringValue>Review portfolio allocation and consider rebalancing to reduce risk exposure.</stringValue>
+            </value>
+        </inputAssignments>
+    </recordCreates>
+    
+    <!-- Step 3: Send Email Notification -->
+    <actionCalls>
+        <name>Send_Email_Notification</name>
+        <label>Send Email Notification</label>
+        <locationX>176</locationX>
+        <locationY>422</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <stringValue>🔴 CryptoRisk Alert: {!varAlertType} - {!varPortfolioId}</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <stringValue>A risk alert has been triggered for your portfolio.
+
+Alert Type: {!varAlertType}
+Severity: {!varSeverity}
+Portfolio: {!varPortfolioId}
+Metric: {!varMetricName}
+Current Value: {!varCurrentValue}
+Threshold: {!varThresholdValue}
+
+Please review the alert details in the CryptoRisk Analytics dashboard.
+
+View Alert: [Dashboard Link]
+
+This is an automated alert from CryptoRisk Analytics.</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <stringValue>portfolio.manager@example.com</stringValue>
+            </value>
+        </inputParameters>
+    </actionCalls>
+    
+</Flow>

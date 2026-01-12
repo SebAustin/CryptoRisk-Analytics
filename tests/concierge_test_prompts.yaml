@@ -1,0 +1,607 @@
+# =============================================================================
+# CONCIERGE AI TEST PROMPTS
+# CryptoRisk Analytics - Test Suite for AI Agent Accuracy
+# =============================================================================
+# 
+# Instructions:
+# 1. Ask each prompt to the Concierge AI in Tableau Data Cloud
+# 2. Compare the AI's response with the Expected Answer
+# 3. Check that Key Elements are present in the response
+# 4. Verify that Data Sources are correctly referenced
+#
+# Pass Criteria:
+# - Response contains all key elements
+# - Response uses correct data sources/DMOs
+# - Response applies correct business logic
+# - Response follows business preferences
+# =============================================================================
+
+test_suite:
+  name: "CryptoRisk Analytics Concierge Validation"
+  version: "1.0"
+  created_date: "2026-01-10"
+
+test_categories:
+  
+  # ===========================================================================
+  # CATEGORY 1: BASIC PORTFOLIO QUERIES
+  # ===========================================================================
+  
+  - category: "Basic Portfolio Queries"
+    description: "Test basic portfolio information retrieval"
+    tests:
+    
+      - id: "BP-001"
+        prompt: "What are my largest portfolios?"
+        expected_answer: |
+          The largest portfolios by total value are:
+          1. High Growth (PF003): $399,918
+          2. Balanced Portfolio (PF002): $252,852
+          3. Conservative Growth (PF001): $96,549
+        key_elements:
+          - "Sorted by portfolio value (descending)"
+          - "All three portfolio names shown"
+          - "Correct portfolio values"
+        data_sources:
+          - "dmo_portfolio_positions"
+        business_logic:
+          - "'Largest' refers to total portfolio value being highest"
+          - "Sort by position_value aggregated by portfolio_id"
+        
+      - id: "BP-002"
+        prompt: "Show me all my positions"
+        expected_answer: |
+          Your portfolio positions across all portfolios include:
+          - Top positions: ETH ($122,706), SOL ($103,978), BTC ($88,904)
+          - Symbol, Position Value, and Current Weight shown for each
+          - Sorted by position value (highest to lowest)
+          - Total of 15 positions across 3 portfolios
+        key_elements:
+          - "Symbol displayed"
+          - "Position value displayed"
+          - "Current weight displayed"
+          - "Sorted by value descending"
+        data_sources:
+          - "dmo_portfolio_positions"
+        business_logic:
+          - "Always show symbol, position value, and current weight for positions"
+          - "Default sort by position value descending"
+      
+      - id: "BP-003"
+        prompt: "What's the total value of all my portfolios?"
+        expected_answer: |
+          The total value across all portfolios is $749,319.
+          Breakdown:
+          - High Growth: $399,918 (53.4%)
+          - Balanced Portfolio: $252,852 (33.7%)
+          - Conservative Growth: $96,549 (12.9%)
+        key_elements:
+          - "Total sum: $749,319"
+          - "Breakdown by portfolio"
+          - "Percentage of total shown"
+        data_sources:
+          - "dmo_portfolio_positions"
+        metrics:
+          - "SUM(position_value)"
+  
+  # ===========================================================================
+  # CATEGORY 2: CRYPTO PRICE QUERIES
+  # ===========================================================================
+  
+  - category: "Crypto Price Queries"
+    description: "Test cryptocurrency price and performance queries"
+    tests:
+    
+      - id: "CP-001"
+        prompt: "What's the current Bitcoin price?"
+        expected_answer: |
+          Bitcoin (BTC) is currently trading at $90,513.10 (as of Jan 9, 2026).
+          24-hour change: -0.56%
+        key_elements:
+          - "Price shown"
+          - "Date of price shown"
+          - "24h change shown"
+        data_sources:
+          - "dmo_crypto_prices"
+        filters:
+          - "symbol = 'BTC'"
+          - "date = MAX(date)"
+      
+      - id: "CP-002"
+        prompt: "Which cryptocurrencies had the best performance today?"
+        expected_answer: |
+          Top performing cryptocurrencies (24h change on Jan 9, 2026):
+          1. ATOM: +5.16%
+          2. TRX: +1.10%
+          3. ICP: +0.69%
+          4. AAVE: +0.67%
+          5. BNB: +0.42%
+        key_elements:
+          - "Sorted by daily return % descending"
+          - "Positive returns only (or top 5)"
+          - "Symbol and percentage shown"
+        data_sources:
+          - "dmo_crypto_prices"
+        filters:
+          - "date = MAX(date)"
+        sort:
+          - "daily_return DESC"
+      
+      - id: "CP-003"
+        prompt: "Show me the most volatile cryptocurrencies"
+        expected_answer: |
+          Most volatile cryptocurrencies (30-day volatility):
+          Should show top assets by volatility_30d measure
+          Sorted highest to lowest
+        key_elements:
+          - "Volatility metric displayed"
+          - "Sorted by volatility descending"
+          - "Default to 30-day window"
+        data_sources:
+          - "dmo_crypto_prices"
+        metrics:
+          - "volatility_30d"
+        business_logic:
+          - "Default to 30-day volatility unless specified"
+  
+  # ===========================================================================
+  # CATEGORY 3: RISK ANALYSIS
+  # ===========================================================================
+  
+  - category: "Risk Analysis"
+    description: "Test risk metrics and portfolio risk assessment"
+    tests:
+    
+      - id: "RA-001"
+        prompt: "Which of my portfolios is highest risk?"
+        expected_answer: |
+          Among your portfolios, risk varies based on allocation strategy:
+          - High Growth (PF003): Risk Tolerance = High
+          - Balanced Portfolio (PF002): Risk Tolerance = Medium  
+          - Conservative Growth (PF001): Risk Tolerance = Low
+          
+          Compare actual volatility metrics to confirm which has highest realized risk.
+          Note: 'High risk' threshold = volatility > 25% OR max drawdown > -30%
+        key_elements:
+          - "Portfolio identified"
+          - "Volatility or risk metric shown"
+          - "Risk assessment provided"
+        data_sources:
+          - "dmo_portfolio_positions"
+          - "risk_metrics_portfolio"
+        business_logic:
+          - "'High risk' = volatility > 25% OR max drawdown > -30%"
+          - "Should show volatility and/or VaR"
+      
+      - id: "RA-002"
+        prompt: "What's my portfolio's Value at Risk?"
+        expected_answer: |
+          Value at Risk (95% confidence) for each portfolio:
+          - Conservative Growth ($96,549): VaR should be ~-$1,400 to -$2,000
+          - Balanced Portfolio ($252,852): VaR should be ~-$3,500 to -$5,000
+          - High Growth ($399,918): VaR should be ~-$6,000 to -$8,000
+          
+          This means there's a 5% chance of losing more than these amounts in a single day.
+        key_elements:
+          - "VaR shown as negative value"
+          - "Both dollar and percentage shown"
+          - "Confidence level stated"
+          - "Explanation of meaning"
+        data_sources:
+          - "risk_metrics_portfolio"
+        metrics:
+          - "var_95"
+        business_logic:
+          - "VaR always displayed as negative"
+      
+      - id: "RA-003"
+        prompt: "Show me my Sharpe ratio"
+        expected_answer: |
+          Sharpe Ratios (risk-adjusted returns) for each portfolio:
+          - Conservative Growth: [calculated value]
+          - Balanced Portfolio: [calculated value]
+          - High Growth: [calculated value]
+          
+          A Sharpe > 1.0 is considered good. Sharpe > 2.0 is excellent.
+          Formula: (Portfolio Return - Risk-Free Rate 2%) / Portfolio Volatility (365d)
+        key_elements:
+          - "All portfolios shown"
+          - "Numeric value displayed"
+          - "Interpretation provided"
+        data_sources:
+          - "risk_metrics_portfolio"
+        metrics:
+          - "sharpe_ratio"
+  
+  # ===========================================================================
+  # CATEGORY 4: PORTFOLIO MANAGEMENT
+  # ===========================================================================
+  
+  - category: "Portfolio Management"
+    description: "Test portfolio rebalancing and allocation queries"
+    tests:
+    
+      - id: "PM-001"
+        prompt: "Do any of my portfolios need rebalancing?"
+        expected_answer: |
+          Checking weight drift against target allocations...
+          Positions with drift > 10% (rebalance threshold):
+          [List positions where ABS(current_weight - target_weight) > 0.10]
+          
+          If none exceed threshold: "All portfolios are within rebalance threshold (10%)"
+        key_elements:
+          - "Weight drift calculated"
+          - "Rebalance threshold (10%) mentioned"
+          - "Positions identified OR confirmation none need rebalancing"
+        data_sources:
+          - "dmo_portfolio_positions"
+        calculated_fields:
+          - "weight_drift = current_weight - target_weight"
+        business_logic:
+          - "Rebalance triggered if weight drift > 10%"
+      
+      - id: "PM-002"
+        prompt: "Which positions are overweight?"
+        expected_answer: |
+          Overweight positions (current weight > target weight by >10%):
+          [Symbol] - Current: X%, Target: Y%, Drift: +Z%
+        key_elements:
+          - "Only positions with positive drift > 10% shown"
+          - "Current, target, and drift displayed"
+        data_sources:
+          - "dmo_portfolio_positions"
+        business_logic:
+          - "'Overweight' = current weight exceeds target by > 10%"
+      
+      - id: "PM-003"
+        prompt: "How diversified are my portfolios?"
+        expected_answer: |
+          Diversification Analysis (using HHI - Herfindahl Index):
+          - High Growth (PF003): HHI = 0.125 (Well diversified - 5 positions, largest is 25%)
+          - Balanced Portfolio (PF002): HHI = 0.167 (Moderately diversified - 6 positions)
+          - Conservative Growth (PF001): HHI = 0.35 (Concentrated - 4 positions, BTC is 50%)
+          
+          Lower HHI = better diversification
+        key_elements:
+          - "HHI metric for each portfolio"
+          - "Ranking provided"
+          - "Explanation of diversification level"
+        data_sources:
+          - "risk_metrics_portfolio"
+        metrics:
+          - "concentration_hhi"
+        business_logic:
+          - "'Diversified' = HHI < 0.15 AND no position > 20%"
+          - "'Concentrated' = HHI > 0.30 OR any position > 30%"
+  
+  # ===========================================================================
+  # CATEGORY 5: TRADING HISTORY
+  # ===========================================================================
+  
+  - category: "Trading History"
+    description: "Test trade history and volume queries"
+    tests:
+    
+      - id: "TH-001"
+        prompt: "Show me my recent trades"
+        expected_answer: |
+          Recent trades (last 7 days):
+          Example trades from Jan 9, 2026:
+          - BTC SELL: 0.0503 @ $188,591.55 = $9,488.43
+          - SOL BUY: 151.93 @ $136.35 = $20,716.02
+          - UNI BUY: 75,479,790 @ $0.00034 = $25,410.18
+          - LINK BUY: 216.22 @ $5.33 = $1,153.46
+          [Additional trades listed with: Date, Symbol, Type, Quantity, Price, Amount]
+          Sorted by date descending
+        key_elements:
+          - "Last 7 days filter applied"
+          - "All trade details shown"
+          - "Sorted by date descending"
+        data_sources:
+          - "dmo_trades"
+        filters:
+          - "trade_date >= TODAY() - 7"
+        business_logic:
+          - "'Recent trades' = last 7 days by default"
+      
+      - id: "TH-002"
+        prompt: "What's my most traded crypto?"
+        expected_answer: |
+          Most traded cryptocurrency (by USD volume):
+          [Symbol] - Total volume: $X,XXX
+          
+          Note: Based on total trade amount, not number of trades
+        key_elements:
+          - "Ranked by USD trade volume"
+          - "Not by trade count"
+          - "Total volume shown"
+        data_sources:
+          - "dmo_trades"
+        metrics:
+          - "SUM(trade_amount)"
+        business_logic:
+          - "'Most traded' = total USD volume, not trade count"
+      
+      - id: "TH-003"
+        prompt: "How much did I pay in trading fees this year?"
+        expected_answer: |
+          Total trading fees (Year-to-Date):
+          $X,XXX.XX
+          
+          Breakdown by exchange (if available)
+        key_elements:
+          - "YTD filter applied"
+          - "Total fee amount shown"
+        data_sources:
+          - "dmo_trades"
+        metrics:
+          - "SUM(fee)"
+        filters:
+          - "YEAR(trade_date) = YEAR(TODAY())"
+  
+  # ===========================================================================
+  # CATEGORY 6: MARKET ANALYSIS
+  # ===========================================================================
+  
+  - category: "Market Analysis"
+    description: "Test market-wide metrics and trends"
+    tests:
+    
+      - id: "MA-001"
+        prompt: "What's the current market sentiment?"
+        expected_answer: |
+          Current market sentiment (based on price movements):
+          - Positive movers: X out of Y cryptos
+          - Negative movers: Z out of Y cryptos
+          - Market volatility: N.NN
+          - BTC dominance: XX.XX%
+        key_elements:
+          - "Positive/negative movers counted"
+          - "Market volatility shown"
+          - "BTC dominance displayed"
+        data_sources:
+          - "dmo_market_metrics"
+        filters:
+          - "date = MAX(date)"
+      
+      - id: "MA-002"
+        prompt: "How volatile is the crypto market right now?"
+        expected_answer: |
+          Current market volatility: [value]
+          30-day average volatility: [value]
+          
+          Compared to historical average: [Higher/Lower/Similar]
+        key_elements:
+          - "Current volatility metric"
+          - "Historical comparison"
+        data_sources:
+          - "dmo_market_metrics"
+        metrics:
+          - "market_volatility"
+          - "volatility_30d"
+  
+  # ===========================================================================
+  # CATEGORY 7: COMPARATIVE ANALYSIS
+  # ===========================================================================
+  
+  - category: "Comparative Analysis"
+    description: "Test comparison queries between assets/portfolios"
+    tests:
+    
+      - id: "CA-001"
+        prompt: "How does my portfolio compare to Bitcoin?"
+        expected_answer: |
+          Portfolio performance vs Bitcoin (BTC):
+          - Beta: [value] (>1.0 = more volatile than BTC, <1.0 = less volatile)
+          - Correlation: [value]
+          - Alpha: [value] (excess return vs BTC)
+        key_elements:
+          - "Beta displayed and explained"
+          - "Correlation shown"
+          - "Alpha calculated"
+        data_sources:
+          - "risk_metrics_portfolio"
+        metrics:
+          - "beta_vs_btc"
+          - "alpha"
+        business_logic:
+          - "Beta > 1.0 = more volatile than BTC"
+          - "Beta < 1.0 = less volatile than BTC"
+      
+      - id: "CA-002"
+        prompt: "Compare Ethereum and Solana performance"
+        expected_answer: |
+          Ethereum (ETH) vs Solana (SOL) as of Jan 9, 2026:
+          
+          ETH:
+          - Current price: $3,140.71
+          - 24h change: -0.69%
+          - 30-day MA: $3,027.47
+          
+          SOL:
+          - Current price: $140.90
+          - 24h change: -1.83%
+          - 30-day MA: [calculated value]
+        key_elements:
+          - "Both assets shown"
+          - "Multiple metrics for comparison"
+          - "Same time period for both"
+        data_sources:
+          - "dmo_crypto_prices"
+        filters:
+          - "symbol IN ('ETH', 'SOL')"
+  
+  # ===========================================================================
+  # CATEGORY 8: BUSINESS PREFERENCES VALIDATION
+  # ===========================================================================
+  
+  - category: "Business Preferences"
+    description: "Test that agent follows business preferences"
+    tests:
+    
+      - id: "BP-001"
+        prompt: "Show me accounts"
+        expected_context: "In crypto context, should interpret as 'portfolios'"
+        expected_answer: |
+          I'll show you your portfolios (investment accounts):
+          [List of 3 portfolios with values]
+        key_elements:
+          - "Interprets 'accounts' as 'portfolios'"
+          - "Shows portfolio data"
+        business_logic:
+          - "Domain-specific language interpretation"
+      
+      - id: "BP-002"
+        prompt: "What's my liquid assets?"
+        expected_answer: |
+          Liquid assets (Layer 1 + Exchange Token categories):
+          Key holdings include:
+          - BTC: $88,904 (Conservative Growth + Balanced)
+          - ETH: $122,706 (High Growth) + $62,735 (Balanced) = $185,441
+          - BNB: $28,930 (Conservative Growth) + $23,883 (Balanced) = $52,813
+          
+          Total liquid assets: ~$327,000+ (43-45% of total $749,319 portfolio)
+        key_elements:
+          - "Filters to Layer 1 and Exchange Token"
+          - "Percentage of total shown"
+        data_sources:
+          - "dmo_portfolio_positions"
+          - "dmo_cryptocurrency"
+        business_logic:
+          - "'Liquid assets' = Layer 1 + Exchange Token categories"
+      
+      - id: "BP-003"
+        prompt: "Rank my cryptocurrencies"
+        expected_answer: |
+          Cryptocurrencies ranked by market cap:
+          [List sorted by market cap tier: Large Cap, Mid Cap, Small Cap]
+          
+          Unless specified otherwise, default to market cap ranking
+        key_elements:
+          - "Sorted by market cap"
+          - "Market cap tier shown"
+        business_logic:
+          - "Default crypto ranking = by market cap"
+  
+  # ===========================================================================
+  # CATEGORY 9: TIME-BASED QUERIES
+  # ===========================================================================
+  
+  - category: "Time-Based Queries"
+    description: "Test temporal filtering and date range interpretation"
+    tests:
+    
+      - id: "TB-001"
+        prompt: "Show me performance for the last 30 days"
+        expected_answer: |
+          30-day performance:
+          - Portfolio returns
+          - Volatility
+          - Top/bottom performers
+        key_elements:
+          - "30-day filter applied"
+          - "Performance metrics shown"
+        filters:
+          - "date >= TODAY() - 30"
+      
+      - id: "TB-002"
+        prompt: "How has Bitcoin performed this year?"
+        expected_answer: |
+          Bitcoin (BTC) Year-to-Date performance (Jan 1-9, 2026):
+          - Current price (Jan 9): $90,513.10
+          - Recent high: $91,910.67 (Jan 9 intraday)
+          - Recent low: $89,625.38 (Jan 9 intraday)
+          - YTD return: Calculate from Jan 1 price
+        key_elements:
+          - "YTD filter"
+          - "Return calculation from Jan 1"
+        filters:
+          - "YEAR(date) = YEAR(TODAY())"
+          - "symbol = 'BTC'"
+        business_logic:
+          - "'This year' = YTD"
+  
+  # ===========================================================================
+  # CATEGORY 10: ALERT & ACTION QUERIES
+  # ===========================================================================
+  
+  - category: "Alerts & Actions"
+    description: "Test action triggers and alert conditions"
+    tests:
+    
+      - id: "AA-001"
+        prompt: "Are there any risk alerts I should know about?"
+        expected_answer: |
+          Checking risk thresholds...
+          - Portfolios with volatility > 25%: [list or "None"]
+          - Positions > 30% concentration: [list or "None"]
+          - Portfolios exceeding VaR limits: [list or "None"]
+        key_elements:
+          - "Multiple risk checks performed"
+          - "Threshold values mentioned"
+          - "Clear yes/no for each"
+        business_logic:
+          - "Risk alert triggers: vol > 25%, concentration > 30%, VaR exceeded"
+      
+      - id: "AA-002"
+        prompt: "What actions should I take?"
+        expected_answer: |
+          Recommended actions based on current portfolio status:
+          1. Rebalancing: [Yes/No - positions listed if yes]
+          2. Risk alerts: [Any positions flagged]
+          3. Opportunities: [Any underweight positions or cash available]
+        key_elements:
+          - "Actionable recommendations"
+          - "Prioritized list"
+          - "Specific positions/amounts mentioned"
+
+# =============================================================================
+# TESTING CHECKLIST
+# =============================================================================
+
+testing_checklist:
+  - item: "Run each prompt and record actual response"
+  - item: "Check if all key elements are present in response"
+  - item: "Verify correct data sources are used"
+  - item: "Confirm business logic is correctly applied"
+  - item: "Test that agent follows business preferences"
+  - item: "Validate formulas produce expected results"
+  - item: "Check that metrics are formatted correctly (%, $, etc.)"
+  - item: "Verify date filters work as expected"
+  - item: "Confirm agent provides context and explanations"
+  - item: "Test edge cases (empty results, null values, etc.)"
+
+# =============================================================================
+# PASS/FAIL CRITERIA
+# =============================================================================
+
+pass_criteria:
+  accuracy:
+    minimum_threshold: 90
+    description: "90% of key elements must be present in response"
+  
+  data_correctness:
+    requirement: "Must use correct DMOs and fields"
+    description: "Response must reference appropriate data sources"
+  
+  business_logic:
+    requirement: "Must follow business preferences and rules"
+    description: "Interpretations must align with defined business logic"
+  
+  formatting:
+    requirement: "Proper currency, percentage, and date formatting"
+    description: "Values must be formatted according to preferences"
+
+# =============================================================================
+# EXPECTED RESULTS SUMMARY
+# =============================================================================
+
+expected_results:
+  total_tests: 33
+  categories: 10
+  critical_tests: 
+    - "BP-001: Largest portfolios"
+    - "CP-001: Bitcoin price"
+    - "RA-001: Highest risk portfolio"
+    - "PM-001: Rebalancing needs"
+    - "BP-001: Business preference validation"

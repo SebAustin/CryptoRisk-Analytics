@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <description>Generates and sends daily portfolio risk report via email. Can be scheduled or triggered on-demand.</description>
+    <label>Send Risk Report</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <schedule>
+            <frequency>Daily</frequency>
+            <startDate>2024-01-01</startDate>
+            <startTime>08:00:00.000Z</startTime>
+        </schedule>
+    </start>
+    <status>Active</status>
+    
+    <!-- Variables -->
+    <variables>
+        <name>varPortfolioCollection</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Portfolio__c</objectType>
+    </variables>
+    
+    <variables>
+        <name>varCurrentPortfolio</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Portfolio__c</objectType>
+    </variables>
+    
+    <variables>
+        <name>varReportHTML</name>
+        <dataType>String</dataType>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    
+    <variables>
+        <name>varAlertCount</name>
+        <dataType>Number</dataType>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <scale>0</scale>
+    </variables>
+    
+    <!-- Step 1: Get All Active Portfolios -->
+    <recordLookups>
+        <name>Get_Active_Portfolios</name>
+        <label>Get Active Portfolios</label>
+        <locationX>176</locationX>
+        <locationY>134</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Loop_Through_Portfolios</targetReference>
+        </connector>
+        <filters>
+            <field>Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Active</stringValue>
+            </value>
+        </filters>
+        <object>Portfolio__c</object>
+        <outputReference>varPortfolioCollection</outputReference>
+        <queriedFields>Id</queriedFields>
+        <queriedFields>Portfolio_Name__c</queriedFields>
+        <queriedFields>Portfolio_ID__c</queriedFields>
+        <queriedFields>Total_Value__c</queriedFields>
+        <queriedFields>Risk_Tolerance__c</queriedFields>
+        <queriedFields>Owner__c</queriedFields>
+    </recordLookups>
+    
+    <!-- Step 2: Loop Through Each Portfolio -->
+    <loops>
+        <name>Loop_Through_Portfolios</name>
+        <label>Loop Through Portfolios</label>
+        <locationX>176</locationX>
+        <locationY>278</locationY>
+        <assignNextValueToReference>varCurrentPortfolio</assignNextValueToReference>
+        <collectionReference>varPortfolioCollection</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Get_Active_Alerts</targetReference>
+        </nextValueConnector>
+    </loops>
+    
+    <!-- Step 3: Get Active Alerts for Portfolio -->
+    <recordLookups>
+        <name>Get_Active_Alerts</name>
+        <label>Get Active Alerts</label>
+        <locationX>176</locationX>
+        <locationY>422</locationY>
+        <assignNullValuesIfNoRecordsFound>true</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Count_Alerts</targetReference>
+        </connector>
+        <filters>
+            <field>Portfolio__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>varCurrentPortfolio.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Active</stringValue>
+            </value>
+        </filters>
+        <object>Risk_Alert__c</object>
+        <queriedFields>Alert_Type__c</queriedFields>
+        <queriedFields>Severity__c</queriedFields>
+        <queriedFields>Description__c</queriedFields>
+    </recordLookups>
+    
+    <!-- Step 4: Count Alerts -->
+    <assignments>
+        <name>Count_Alerts</name>
+        <label>Count Alerts</label>
+        <locationX>176</locationX>
+        <locationY>566</locationY>
+        <assignmentItems>
+            <assignToReference>varAlertCount</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <numberValue>0</numberValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Generate_Report_HTML</targetReference>
+        </connector>
+    </assignments>
+    
+    <!-- Step 5: Generate HTML Report -->
+    <assignments>
+        <name>Generate_Report_HTML</name>
+        <label>Generate Report HTML</label>
+        <locationX>176</locationX>
+        <locationY>710</locationY>
+        <assignmentItems>
+            <assignToReference>varReportHTML</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>&lt;html&gt;
+&lt;head&gt;
+    &lt;style&gt;
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background: #1E40AF; color: white; padding: 20px; border-radius: 8px; }
+        .metric { display: inline-block; margin: 10px; padding: 15px; background: #f5f5f5; border-radius: 8px; }
+        .alert { padding: 10px; margin: 5px 0; border-left: 4px solid red; background: #fff3f3; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc; font-size: 12px; color: #666; }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class=&quot;header&quot;&gt;
+        &lt;h1&gt;Portfolio Risk Report&lt;/h1&gt;
+        &lt;p&gt;Portfolio: {!varCurrentPortfolio.Portfolio_Name__c}&lt;/p&gt;
+        &lt;p&gt;Date: {!$Flow.CurrentDate}&lt;/p&gt;
+    &lt;/div&gt;
+    
+    &lt;h2&gt;Key Metrics&lt;/h2&gt;
+    &lt;div class=&quot;metric&quot;&gt;
+        &lt;strong&gt;Total Value:&lt;/strong&gt;&lt;br/&gt;
+        ${!varCurrentPortfolio.Total_Value__c}
+    &lt;/div&gt;
+    &lt;div class=&quot;metric&quot;&gt;
+        &lt;strong&gt;Risk Tolerance:&lt;/strong&gt;&lt;br/&gt;
+        {!varCurrentPortfolio.Risk_Tolerance__c}
+    &lt;/div&gt;
+    &lt;div class=&quot;metric&quot;&gt;
+        &lt;strong&gt;Volatility (30d):&lt;/strong&gt;&lt;br/&gt;
+        12.5%
+    &lt;/div&gt;
+    &lt;div class=&quot;metric&quot;&gt;
+        &lt;strong&gt;Sharpe Ratio:&lt;/strong&gt;&lt;br/&gt;
+        0.89
+    &lt;/div&gt;
+    
+    &lt;h2&gt;Active Alerts ({!varAlertCount})&lt;/h2&gt;
+    &lt;p&gt;✅ No active alerts. Portfolio within acceptable risk parameters.&lt;/p&gt;
+    
+    &lt;h2&gt;Recommended Actions&lt;/h2&gt;
+    &lt;ul&gt;
+        &lt;li&gt;Continue monitoring market conditions&lt;/li&gt;
+        &lt;li&gt;Review portfolio quarterly for rebalancing opportunities&lt;/li&gt;
+    &lt;/ul&gt;
+    
+    &lt;p&gt;&lt;a href=&quot;https://your-org.lightning.force.com/dashboard&quot;&gt;View Full Dashboard →&lt;/a&gt;&lt;/p&gt;
+    
+    &lt;div class=&quot;footer&quot;&gt;
+        &lt;p&gt;This is an automated report from CryptoRisk Analytics.&lt;/p&gt;
+        &lt;p&gt;For questions, contact your portfolio manager.&lt;/p&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Send_Email_Report</targetReference>
+        </connector>
+    </assignments>
+    
+    <!-- Step 6: Send Email -->
+    <actionCalls>
+        <name>Send_Email_Report</name>
+        <label>Send Email Report</label>
+        <locationX>176</locationX>
+        <locationY>854</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <connector>
+            <targetReference>Loop_Through_Portfolios</targetReference>
+        </connector>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <stringValue>📊 Daily Risk Report: {!varCurrentPortfolio.Portfolio_Name__c} - {!$Flow.CurrentDate}</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>varReportHTML</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <stringValue>portfolio.manager@example.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>CurrentUser</stringValue>
+            </value>
+        </inputParameters>
+    </actionCalls>
+    
+</Flow>

@@ -1,0 +1,505 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    
+    <!-- =================================================================== -->
+    <!-- RISK ALERT CUSTOM OBJECT                                            -->
+    <!-- =================================================================== -->
+    
+    <fullName>Risk_Alert__c</fullName>
+    <label>Risk Alert</label>
+    <pluralLabel>Risk Alerts</pluralLabel>
+    <nameField>
+        <displayFormat>ALERT-{00000}</displayFormat>
+        <label>Alert Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    
+    <!-- Fields -->
+    
+    <fields>
+        <fullName>Portfolio__c</fullName>
+        <label>Portfolio</label>
+        <referenceTo>Portfolio__c</referenceTo>
+        <relationshipLabel>Risk Alerts</relationshipLabel>
+        <relationshipName>Risk_Alerts</relationshipName>
+        <type>Lookup</type>
+    </fields>
+    
+    <fields>
+        <fullName>Alert_Type__c</fullName>
+        <label>Alert Type</label>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>High Volatility</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Concentration Risk</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>VaR Threshold Exceeded</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Max Drawdown</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Liquidity Concern</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Correlation Risk</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    
+    <fields>
+        <fullName>Severity__c</fullName>
+        <label>Severity</label>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Critical</fullName>
+                    <default>false</default>
+                    <color>#FF0000</color>
+                </value>
+                <value>
+                    <fullName>Warning</fullName>
+                    <default>false</default>
+                    <color>#FFA500</color>
+                </value>
+                <value>
+                    <fullName>Info</fullName>
+                    <default>true</default>
+                    <color>#00FF00</color>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    
+    <fields>
+        <fullName>Asset_Symbol__c</fullName>
+        <label>Asset Symbol</label>
+        <type>Text</type>
+        <length>10</length>
+    </fields>
+    
+    <fields>
+        <fullName>Metric_Name__c</fullName>
+        <label>Metric Name</label>
+        <type>Text</type>
+        <length>50</length>
+    </fields>
+    
+    <fields>
+        <fullName>Current_Value__c</fullName>
+        <label>Current Value</label>
+        <type>Number</type>
+        <precision>18</precision>
+        <scale>4</scale>
+    </fields>
+    
+    <fields>
+        <fullName>Threshold_Value__c</fullName>
+        <label>Threshold Value</label>
+        <type>Number</type>
+        <precision>18</precision>
+        <scale>4</scale>
+    </fields>
+    
+    <fields>
+        <fullName>Triggered_Date__c</fullName>
+        <label>Triggered Date</label>
+        <type>DateTime</type>
+        <defaultValue>NOW()</defaultValue>
+    </fields>
+    
+    <fields>
+        <fullName>Status__c</fullName>
+        <label>Status</label>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Active</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Acknowledged</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Resolved</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>False Positive</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    
+    <fields>
+        <fullName>Priority__c</fullName>
+        <label>Priority</label>
+        <type>Number</type>
+        <precision>1</precision>
+        <scale>0</scale>
+        <defaultValue>3</defaultValue>
+    </fields>
+    
+    <fields>
+        <fullName>Description__c</fullName>
+        <label>Description</label>
+        <type>LongTextArea</type>
+        <length>32768</length>
+    </fields>
+    
+    <fields>
+        <fullName>Recommended_Action__c</fullName>
+        <label>Recommended Action</label>
+        <type>LongTextArea</type>
+        <length>32768</length>
+    </fields>
+    
+    <fields>
+        <fullName>Acknowledged_By__c</fullName>
+        <label>Acknowledged By</label>
+        <referenceTo>User</referenceTo>
+        <relationshipName>Acknowledged_Alerts</relationshipName>
+        <type>Lookup</type>
+    </fields>
+    
+    <fields>
+        <fullName>Acknowledged_Date__c</fullName>
+        <label>Acknowledged Date</label>
+        <type>DateTime</type>
+    </fields>
+    
+    <fields>
+        <fullName>Resolved_Date__c</fullName>
+        <label>Resolved Date</label>
+        <type>DateTime</type>
+    </fields>
+    
+    <!-- =================================================================== -->
+    <!-- REBALANCE TASK CUSTOM OBJECT                                        -->
+    <!-- =================================================================== -->
+    
+    <fullName>Rebalance_Task__c</fullName>
+    <label>Rebalance Task</label>
+    <pluralLabel>Rebalance Tasks</pluralLabel>
+    <nameField>
+        <displayFormat>REBAL-{00000}</displayFormat>
+        <label>Task Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    
+    <!-- Fields -->
+    
+    <fields>
+        <fullName>Portfolio__c</fullName>
+        <label>Portfolio</label>
+        <referenceTo>Portfolio__c</referenceTo>
+        <relationshipLabel>Rebalance Tasks</relationshipLabel>
+        <relationshipName>Rebalance_Tasks</relationshipName>
+        <type>Lookup</type>
+    </fields>
+    
+    <fields>
+        <fullName>Created_Date__c</fullName>
+        <label>Created Date</label>
+        <type>DateTime</type>
+        <defaultValue>NOW()</defaultValue>
+    </fields>
+    
+    <fields>
+        <fullName>Status__c</fullName>
+        <label>Status</label>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Pending</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Under Review</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Approved</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Executing</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Executed</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Cancelled</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Failed</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    
+    <fields>
+        <fullName>Rebalance_Reason__c</fullName>
+        <label>Rebalance Reason</label>
+        <type>LongTextArea</type>
+        <length>32768</length>
+    </fields>
+    
+    <fields>
+        <fullName>Target_Allocation__c</fullName>
+        <label>Target Allocation</label>
+        <type>LongTextArea</type>
+        <length>32768</length>
+        <description>JSON format: {&quot;BTC&quot;:0.30, &quot;ETH&quot;:0.25, ...}</description>
+    </fields>
+    
+    <fields>
+        <fullName>Current_Allocation__c</fullName>
+        <label>Current Allocation</label>
+        <type>LongTextArea</type>
+        <length>32768</length>
+        <description>JSON format: {&quot;BTC&quot;:0.35, &quot;ETH&quot;:0.22, ...}</description>
+    </fields>
+    
+    <fields>
+        <fullName>Drift_Analysis__c</fullName>
+        <label>Drift Analysis</label>
+        <type>LongTextArea</type>
+        <length>32768</length>
+    </fields>
+    
+    <fields>
+        <fullName>Suggested_Trades__c</fullName>
+        <label>Suggested Trades</label>
+        <type>LongTextArea</type>
+        <length>32768</length>
+    </fields>
+    
+    <fields>
+        <fullName>Estimated_Cost__c</fullName>
+        <label>Estimated Cost</label>
+        <type>Currency</type>
+        <precision>18</precision>
+        <scale>2</scale>
+    </fields>
+    
+    <fields>
+        <fullName>Expected_Benefit__c</fullName>
+        <label>Expected Benefit</label>
+        <type>LongTextArea</type>
+        <length>32768</length>
+    </fields>
+    
+    <fields>
+        <fullName>Approved_By__c</fullName>
+        <label>Approved By</label>
+        <referenceTo>User</referenceTo>
+        <relationshipName>Approved_Rebalances</relationshipName>
+        <type>Lookup</type>
+    </fields>
+    
+    <fields>
+        <fullName>Approved_Date__c</fullName>
+        <label>Approved Date</label>
+        <type>DateTime</type>
+    </fields>
+    
+    <fields>
+        <fullName>Executed_Date__c</fullName>
+        <label>Executed Date</label>
+        <type>DateTime</type>
+    </fields>
+    
+    <fields>
+        <fullName>Execution_Notes__c</fullName>
+        <label>Execution Notes</label>
+        <type>LongTextArea</type>
+        <length>32768</length>
+    </fields>
+    
+    <fields>
+        <fullName>Priority__c</fullName>
+        <label>Priority</label>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>High</fullName>
+                    <default>false</default>
+                    <label>High (drift &gt; 15%)</label>
+                </value>
+                <value>
+                    <fullName>Medium</fullName>
+                    <default>true</default>
+                    <label>Medium (drift 10-15%)</label>
+                </value>
+                <value>
+                    <fullName>Low</fullName>
+                    <default>false</default>
+                    <label>Low (drift &lt; 10%)</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    
+    <!-- =================================================================== -->
+    <!-- PORTFOLIO CUSTOM OBJECT (Dimension Master)                         -->
+    <!-- =================================================================== -->
+    
+    <fullName>Portfolio__c</fullName>
+    <label>Portfolio</label>
+    <pluralLabel>Portfolios</pluralLabel>
+    <nameField>
+        <label>Portfolio Name</label>
+        <type>Text</type>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>Private</sharingModel>
+    
+    <!-- Fields -->
+    
+    <fields>
+        <fullName>Portfolio_ID__c</fullName>
+        <label>Portfolio ID</label>
+        <type>Text</type>
+        <length>10</length>
+        <externalId>true</externalId>
+        <unique>true</unique>
+    </fields>
+    
+    <fields>
+        <fullName>Portfolio_Name__c</fullName>
+        <label>Portfolio Name</label>
+        <type>Text</type>
+        <length>80</length>
+    </fields>
+    
+    <fields>
+        <fullName>Risk_Tolerance__c</fullName>
+        <label>Risk Tolerance</label>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Low</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Medium</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>High</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    
+    <fields>
+        <fullName>Total_Value__c</fullName>
+        <label>Total Value</label>
+        <type>Currency</type>
+        <precision>18</precision>
+        <scale>2</scale>
+    </fields>
+    
+    <fields>
+        <fullName>Owner__c</fullName>
+        <label>Portfolio Manager</label>
+        <referenceTo>User</referenceTo>
+        <relationshipName>Managed_Portfolios</relationshipName>
+        <type>Lookup</type>
+    </fields>
+    
+    <fields>
+        <fullName>Benchmark__c</fullName>
+        <label>Benchmark</label>
+        <type>Text</type>
+        <length>10</length>
+        <defaultValue>&quot;BTC&quot;</defaultValue>
+    </fields>
+    
+    <fields>
+        <fullName>Target_Return__c</fullName>
+        <label>Target Return</label>
+        <type>Percent</type>
+        <precision>5</precision>
+        <scale>2</scale>
+    </fields>
+    
+    <fields>
+        <fullName>Max_Volatility__c</fullName>
+        <label>Max Volatility</label>
+        <type>Percent</type>
+        <precision>5</precision>
+        <scale>2</scale>
+    </fields>
+    
+    <fields>
+        <fullName>Status__c</fullName>
+        <label>Status</label>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Active</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Inactive</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Under Review</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    
+    <fields>
+        <fullName>Created_Date__c</fullName>
+        <label>Created Date</label>
+        <type>Date</type>
+    </fields>
+    
+    <fields>
+        <fullName>Last_Rebalanced__c</fullName>
+        <label>Last Rebalanced</label>
+        <type>Date</type>
+    </fields>
+    
+</CustomObject>

@@ -1,0 +1,989 @@
+# CryptoRisk Analytics - Tableau Semantic Layer Configuration
+# Complete configuration for dimensions, measures, KPIs, and business preferences
+
+semantic_model:
+  name: "CryptoRisk Analytics"
+  description: "Comprehensive cryptocurrency portfolio risk and performance analytics"
+  version: "1.0.0"
+  data_source: "Salesforce Data Cloud"
+  
+  # Data Model Objects (DMOs)
+  dmos:
+    - name: "dmo_cryptocurrency"
+      type: "dimension"
+      description: "Cryptocurrency reference data"
+    - name: "dmo_crypto_prices"
+      type: "fact"
+      description: "Daily price data with embedded date attributes"
+    - name: "dmo_portfolio_positions"
+      type: "fact"
+      description: "Portfolio holdings with embedded portfolio attributes"
+    - name: "dmo_trades"
+      type: "fact"
+      description: "Trade transaction history"
+    - name: "dmo_market_metrics"
+      type: "fact"
+      description: "Market-wide daily metrics"
+  
+  # =============================================================================
+  # DIMENSIONS
+  # =============================================================================
+  
+  dimensions:
+    
+    # --- Cryptocurrency Dimensions ---
+    
+    - name: "Crypto Symbol"
+      source_field: "dmo_cryptocurrency.symbol"
+      type: "categorical"
+      description: "Cryptocurrency ticker symbol (BTC, ETH, etc.)"
+      data_type: "string"
+      cardinality: "low"  # 15 cryptos
+      
+    - name: "Crypto Name"
+      source_field: "dmo_cryptocurrency.name"
+      type: "categorical"
+      description: "Full cryptocurrency name"
+      data_type: "string"
+      cardinality: "low"
+      
+    - name: "Crypto Category"
+      source_field: "dmo_cryptocurrency.category"
+      type: "categorical"
+      description: "Asset category (Layer 1, DeFi, Exchange Token, etc.)"
+      data_type: "string"
+      cardinality: "low"  # ~10 categories
+      sort_order: "alphabetical"
+      
+    - name: "Market Cap Tier"
+      source_field: "dmo_cryptocurrency.market_cap_tier"
+      type: "categorical"
+      description: "Market capitalization tier (Large/Mid/Small Cap)"
+      data_type: "string"
+      cardinality: "low"  # 3 tiers
+      sort_order: ["Large Cap", "Mid Cap", "Small Cap"]
+      
+    - name: "Is Stablecoin"
+      source_field: "dmo_cryptocurrency.is_stablecoin"
+      type: "boolean"
+      description: "Whether asset is a stablecoin"
+      data_type: "boolean"
+      
+    # --- Date/Time Dimensions ---
+    
+    - name: "Date"
+      source_field: "dmo_crypto_prices.date"
+      type: "temporal"
+      description: "Trading date"
+      data_type: "date"
+      granularity: "day"
+      
+    - name: "Year"
+      source_field: "dmo_crypto_prices.year"
+      type: "temporal"
+      description: "Year"
+      data_type: "integer"
+      
+    - name: "Month"
+      source_field: "dmo_crypto_prices.month"
+      type: "temporal"
+      description: "Month number (1-12)"
+      data_type: "integer"
+      
+    - name: "Quarter"
+      source_field: "dmo_crypto_prices.quarter"
+      type: "temporal"
+      description: "Quarter (Q1-Q4)"
+      data_type: "integer"
+      
+    - name: "Day of Week"
+      source_field: "dmo_crypto_prices.day_of_week"
+      type: "temporal"
+      description: "Day of week name"
+      data_type: "string"
+      sort_order: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+      
+    - name: "Is Weekend"
+      source_field: "dmo_crypto_prices.is_weekend"
+      type: "boolean"
+      description: "Whether date falls on weekend"
+      data_type: "boolean"
+      
+    # --- Portfolio Dimensions ---
+    
+    - name: "Portfolio ID"
+      source_field: "dmo_portfolio_positions.portfolio_id"
+      type: "categorical"
+      description: "Unique portfolio identifier"
+      data_type: "string"
+      cardinality: "low"  # 3 portfolios
+      
+    - name: "Portfolio Name"
+      source_field: "dmo_portfolio_positions.portfolio_name"
+      type: "categorical"
+      description: "Portfolio display name"
+      data_type: "string"
+      cardinality: "low"
+      
+    - name: "Risk Tolerance"
+      source_field: "dmo_portfolio_positions.risk_tolerance"
+      type: "categorical"
+      description: "Portfolio risk tolerance level"
+      data_type: "string"
+      cardinality: "low"  # Low/Medium/High
+      sort_order: ["Low", "Medium", "High"]
+      
+    - name: "Risk Category"
+      source_field: "dmo_portfolio_positions.risk_category"
+      type: "categorical"
+      description: "Risk category description"
+      data_type: "string"
+      sort_order: ["Conservative", "Balanced", "Aggressive"]
+      
+    # --- Trade Dimensions ---
+    
+    - name: "Trade Type"
+      source_field: "dmo_trades.trade_type"
+      type: "categorical"
+      description: "Buy or sell transaction"
+      data_type: "string"
+      cardinality: "low"  # BUY/SELL
+      
+    - name: "Exchange"
+      source_field: "dmo_trades.exchange"
+      type: "categorical"
+      description: "Trading exchange"
+      data_type: "string"
+      cardinality: "low"  # ~5 exchanges
+      
+    - name: "Order Type"
+      source_field: "dmo_trades.order_type"
+      type: "categorical"
+      description: "Order type (Market/Limit)"
+      data_type: "string"
+      cardinality: "low"
+      
+    - name: "Trading Pair"
+      source_field: "CONCAT(dmo_trades.symbol, '/USD')"
+      type: "categorical"
+      description: "Trading pair notation"
+      data_type: "string"
+      
+  # =============================================================================
+  # MEASURES
+  # =============================================================================
+  
+  measures:
+    
+    # --- Price Measures ---
+    
+    - name: "Close Price"
+      source_field: "dmo_crypto_prices.close"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Average closing price"
+      
+    - name: "Open Price"
+      source_field: "dmo_crypto_prices.open"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Average opening price"
+      
+    - name: "High Price"
+      source_field: "dmo_crypto_prices.high"
+      aggregation: "max"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Maximum high price"
+      
+    - name: "Low Price"
+      source_field: "dmo_crypto_prices.low"
+      aggregation: "min"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Minimum low price"
+      
+    - name: "Volume"
+      source_field: "dmo_crypto_prices.volume"
+      aggregation: "sum"
+      data_type: "decimal"
+      format: "number"
+      precision: 0
+      description: "Total trading volume"
+      
+    - name: "Market Cap"
+      formula: "Close Price * Volume"
+      aggregation: "sum"
+      data_type: "decimal"
+      format: "currency"
+      precision: 0
+      description: "Estimated market capitalization"
+      
+    # --- Return Measures ---
+    
+    - name: "Daily Return %"
+      source_field: "dmo_crypto_prices.daily_return"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 2
+      description: "Average daily return percentage"
+      
+    - name: "Price Change"
+      source_field: "dmo_crypto_prices.price_change"
+      aggregation: "sum"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Total price change amount"
+      
+    - name: "BTC Daily Return %"
+      formula: "AVG(IIF([dmo_crypto_prices].[symbol] = 'BTC', [dmo_crypto_prices].[Daily Return %], NULL))"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 4
+      description: "Bitcoin's average daily return percentage - Used as market benchmark for beta, correlation, and covariance calculations. Filters data to BTC only."
+      
+    - name: "BTC Return (Annualized)"
+      formula: "AVG(IIF([dmo_crypto_prices].[symbol] = 'BTC', [dmo_crypto_prices].[Daily Return %], NULL)) * 365"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 2
+      description: "Bitcoin's annualized return - Market benchmark for comparing portfolio performance and calculating alpha. Simple annualization of daily returns."
+      
+    # --- Bollinger Bands Measures ---
+    
+    - name: "BB Middle"
+      source_field: "dmo_crypto_prices.bb_middle"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Bollinger Band middle line - 20-day simple moving average (SMA) of closing price. Center line for Bollinger Band trading strategy."
+      
+    - name: "BB Upper"
+      source_field: "dmo_crypto_prices.bb_upper"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Bollinger Band upper limit - Middle band + 2 standard deviations. Price above this level may indicate overbought conditions."
+      
+    - name: "BB Lower"
+      source_field: "dmo_crypto_prices.bb_lower"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Bollinger Band lower limit - Middle band - 2 standard deviations. Price below this level may indicate oversold conditions."
+      
+    - name: "BB Bandwidth"
+      source_field: "dmo_crypto_prices.bb_bandwidth"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 2
+      description: "Bollinger Band width percentage - (Upper - Lower) / Middle × 100. Higher values indicate higher volatility. Low values (<10%) indicate 'squeeze' (potential breakout)."
+      
+    - name: "BB %B"
+      source_field: "dmo_crypto_prices.bb_percent"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "number"
+      precision: 3
+      description: "Bollinger Band %B indicator - (Close - Lower) / (Upper - Lower). Values: >1.0 = overbought (above upper band), <0.0 = oversold (below lower band), 0.5 = at middle band."
+      
+    # --- Correlation Measures ---
+    
+    - name: "Correlation Coefficient"
+      source_field: "dmo_correlation_matrix.correlation"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "number"
+      precision: 4
+      description: "Pearson correlation coefficient between two cryptocurrencies (-1 to 1). Values: 1.0 = perfect positive correlation, 0 = no correlation, -1.0 = perfect negative correlation. Based on 365-day rolling returns."
+      
+    - name: "Correlation Period (Days)"
+      source_field: "dmo_correlation_matrix.period_days"
+      aggregation: "average"
+      data_type: "number"
+      format: "number"
+      precision: 0
+      description: "Number of days used to calculate correlation (typically 365 for annual correlation)"
+      
+    # --- Position Measures ---
+    
+    - name: "Position Value"
+      source_field: "dmo_portfolio_positions.position_value"
+      aggregation: "sum"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Total position value in USD"
+      
+    - name: "Position Quantity"
+      source_field: "dmo_portfolio_positions.quantity"
+      aggregation: "sum"
+      data_type: "decimal"
+      format: "number"
+      precision: 8
+      description: "Total quantity held"
+      
+    - name: "Position Weight %"
+      source_field: "dmo_kpi_concentration.position_weight"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 2
+      description: "Portfolio allocation percentage - Pre-calculated in Python. Position value divided by total portfolio value within each portfolio. Stored in dmo_kpi_concentration for optimal performance."
+      
+    - name: "Unrealized PnL"
+      source_field: "dmo_portfolio_positions.unrealized_pnl"
+      aggregation: "sum"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Total unrealized profit/loss"
+      
+    - name: "Unrealized PnL %"
+      source_field: "dmo_portfolio_positions.unrealized_pnl_pct"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 2
+      description: "Average unrealized return percentage"
+      
+    # --- Trade Measures ---
+    
+    - name: "Trade Amount"
+      source_field: "dmo_trades.trade_amount"
+      aggregation: "sum"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Total trade value"
+      
+    - name: "Trade Fee"
+      source_field: "dmo_trades.fee"
+      aggregation: "sum"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Total trading fees paid"
+      
+    - name: "Trade Count"
+      source_field: "dmo_trades.trade_id"
+      aggregation: "count_distinct"
+      data_type: "integer"
+      format: "number"
+      precision: 0
+      description: "Number of trades"
+      
+    # --- Portfolio Measures ---
+    
+    - name: "Total Portfolio Value"
+      formula: "SUM(Position Value)"
+      aggregation: "sum"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Total value across all positions"
+      
+    - name: "Asset Count"
+      source_field: "dmo_portfolio_positions.symbol"
+      aggregation: "count_distinct"
+      data_type: "integer"
+      format: "number"
+      precision: 0
+      description: "Number of unique assets held"
+      
+    - name: "Portfolio Cost Basis"
+      formula: "SUM([dmo_portfolio_positions].[Position Value]) - SUM([dmo_portfolio_positions].[Unrealized PnL])"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Total cost basis of all positions - original investment amount before gains/losses"
+      
+    - name: "Portfolio Return (Annualized)"
+      source_field: "dmo_kpi_risk_adjusted.portfolio_return_annualized"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 2
+      description: "Annualized portfolio return - Pre-calculated professional return metric based on cost basis and current value. Formula: Total Unrealized P&L / Cost Basis, annualized."
+      
+  # =============================================================================
+  # CALCULATED KPIs
+  # =============================================================================
+  
+  calculated_kpis:
+    
+    # --- Time-Based Performance KPIs ---
+    
+    - name: "Portfolio 24h Change %"
+      formula: "(SUM([dmo_portfolio_positions].[Position Value]) - LOOKUP(SUM([dmo_portfolio_positions].[Position Value]), -1)) / LOOKUP(SUM([dmo_portfolio_positions].[Position Value]), -1) * 100"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 1
+      description: "24-hour percentage change in total portfolio value. Shows short-term performance. IMPORTANT: Requires Date dimension in view and table calculation set to compute along Date. Used in dashboard KPI cards with conditional coloring (green if positive, red if negative)."
+      category: "Performance"
+      table_calculation: true
+      compute_using: "Date"
+      business_context: "Gives portfolio managers immediate visibility into daily movements. Alert-worthy if change exceeds ±5% in single day."
+    
+    # --- Volatility KPIs ---
+    # NOTE: These use LOD expressions with date filters instead of WINDOW functions
+    # User must apply appropriate date filter (Last 30/90/365 days) for accurate calculation
+    
+    - name: "Portfolio Volatility (30d)"
+      formula: "{ FIXED [Portfolio ID] : STDEV([dmo_crypto_prices].[Daily Return %]) } * (365^0.5)"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 2
+      description: "30-day annualized portfolio volatility - Standard deviation of daily returns annualized using (365^0.5). IMPORTANT: Requires date filter set to 'Last 30 days' or relative date range for accurate calculation. Measures short-term risk exposure. Typical range: 15-50% for crypto portfolios."
+      category: "Risk"
+      business_context: "Higher volatility = higher risk. Compare against risk_threshold_high (25%) business preference to trigger alerts. Apply 'Last 30 days' filter to dashboard."
+      
+    - name: "Portfolio Volatility (90d)"
+      formula: "{ FIXED [Portfolio ID] : STDEV([dmo_crypto_prices].[Daily Return %]) } * (365^0.5)"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 2
+      description: "90-day annualized portfolio volatility - Standard deviation of daily returns annualized using (365^0.5). IMPORTANT: Requires date filter set to 'Last 90 days' or relative date range for accurate calculation. Provides medium-term risk view, smoothing out short-term spikes while capturing sustained trends."
+      category: "Risk"
+      business_context: "Use for quarterly risk reporting and trend analysis. More stable than 30d, more responsive than 365d. Apply 'Last 90 days' filter to dashboard."
+      
+    - name: "Portfolio Volatility (365d)"
+      formula: "{ FIXED [Portfolio ID] : STDEV([dmo_crypto_prices].[Daily Return %]) } * (365^0.5)"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 2
+      description: "1-year annualized portfolio volatility - Standard deviation of daily returns annualized using (365^0.5). IMPORTANT: Requires date filter set to 'Last 365 days' or relative date range for accurate calculation. Captures complete market cycle. Most stable measure, used for long-term risk assessment and regulatory reporting."
+      category: "Risk"
+      business_context: "Use for annual reporting, benchmark comparisons, and strategic planning. Less reactive to recent market moves. Apply 'Last 365 days' filter to dashboard."
+      
+    - name: "Downside Volatility (365d)"
+      source_field: "dmo_kpi_volatility.downside_volatility_365d"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 2
+      description: "Annualized downside volatility - Pre-calculated standard deviation of only negative returns, annualized. Used for Sortino Ratio calculation. Measures downside risk only, ignoring upside volatility."
+      category: "Risk"
+      business_context: "More relevant than total volatility for risk-averse investors who only care about losses, not gains. Lower downside volatility = better downside protection."
+      
+    # --- Value at Risk KPIs ---
+    
+    - name: "VaR 95%"
+      formula: "{ FIXED [Portfolio ID] : PERCENTILE([dmo_crypto_prices].[Daily Return %], 0.05) * SUM([dmo_portfolio_positions].[Position Value]) }"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Value at Risk at 95% confidence level - Maximum expected loss on 19 out of 20 days. Answers: 'What's the worst loss I could face on a typical bad day?' Uses historical method (5th percentile of returns multiplied by total position value). IMPORTANT: Filter as_of_date to latest date (2026-01-09 or MAX) to show current VaR, otherwise sums across all historical dates."
+      category: "Risk"
+      threshold:
+        high: -25000  # Alert if potential loss > $25k
+      business_context: "VaR 95% = -$18.5K means you could lose more than $18.5K on 1 out of 20 days. Used for setting position limits and risk budgets. Typical values: 1.5-2.5% of portfolio value for crypto."
+        
+    - name: "VaR 99%"
+      formula: "{ FIXED [Portfolio ID] : PERCENTILE([dmo_crypto_prices].[Daily Return %], 0.01) * SUM([dmo_portfolio_positions].[Position Value]) }"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Value at Risk at 99% confidence level - Maximum expected loss on 99 out of 100 days (extreme tail risk). Answers: 'What could I lose on a really bad day?' More conservative than VaR 95%. Captures tail risk better. IMPORTANT: Filter as_of_date to latest date (2026-01-09 or MAX) to show current VaR, otherwise sums across all historical dates."
+      category: "Risk"
+      threshold:
+        high: -50000  # Alert if potential loss > $50k
+      business_context: "Used for stress testing and worst-case scenario planning. Critical for risk committees and regulatory compliance. VaR 99% should be ~1.5x larger (more negative) than VaR 95%."
+        
+    # --- Risk-Adjusted Return KPIs ---
+    
+    - name: "Sharpe Ratio"
+      source_field: "dmo_kpi_risk_adjusted.sharpe_ratio"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "number"
+      precision: 2
+      description: "Sharpe Ratio - Risk-adjusted return metric. Pre-calculated in Python as (Portfolio Return - 2% risk-free rate) / Portfolio Volatility (365d). Higher ratio indicates better risk-adjusted performance. Expected values: Conservative=0.19, Balanced=0.02, High Growth=0.04."
+      category: "Performance"
+      threshold:
+        low: 0.5   # Below 0.5 is poor
+        high: 2.0  # Above 2.0 is excellent
+      business_context: "Sharpe > 1.0 = good, > 2.0 = excellent, < 0.5 = poor risk-adjusted performance. Compare across portfolios to find best risk/return balance."
+        
+    - name: "Sortino Ratio"
+      source_field: "dmo_kpi_risk_adjusted.sortino_ratio"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "number"
+      precision: 2
+      description: "Sortino Ratio - Pre-calculated downside risk-adjusted return. Only penalizes downside volatility (losses), ignoring upside volatility. Better for asymmetric return distributions common in crypto. Higher = better downside-protected returns."
+      category: "Performance"
+      threshold:
+        low: 1.0   # Below 1.0 is poor downside protection
+        high: 2.5  # Above 2.5 is excellent downside protection
+      business_context: "Preferred over Sharpe when upside volatility is desirable (crypto rallies). Sortino > 1.5 indicates strong downside protection. More relevant for crypto's asymmetric return profile."
+      
+    # --- Beta & Correlation KPIs ---
+    
+    - name: "Beta vs BTC"
+      source_field: "dmo_kpi_risk_adjusted.beta_vs_btc"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "number"
+      precision: 2
+      description: "Beta vs Bitcoin - Measures portfolio's sensitivity to Bitcoin movements. Pre-calculated using covariance/variance. Beta = 1.0 means moves exactly with BTC, < 1.0 = less volatile, > 1.0 = more volatile. Expected: Conservative=0.86, Balanced=0.74, High Growth=0.76."
+      category: "Risk"
+      business_context: "Beta 0.8 = portfolio moves 80% as much as BTC. Use to assess market exposure and diversification effectiveness. BTC is crypto market proxy."
+      
+    - name: "Alpha"
+      source_field: "dmo_kpi_risk_adjusted.alpha"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 2
+      description: "Alpha - Excess return beyond what beta predicts. Pre-calculated as Portfolio Return - (Beta × BTC Return). Measures manager skill vs. passive BTC exposure. Positive alpha = outperformance, negative = underperformance."
+      category: "Performance"
+      threshold:
+        low: 0.0   # Below 0 = underperforming
+        high: 0.05 # Above 5% = strong outperformance
+      business_context: "Alpha > 0 = beating market-adjusted expectations. Justifies active management fees. Target: 5-10% annual alpha for skilled crypto portfolio managers."
+      
+    - name: "Correlation to Market"
+      source_field: "dmo_kpi_risk_adjusted.correlation_to_btc"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "number"
+      precision: 2
+      description: "Correlation coefficient with Bitcoin (market proxy) - Pre-calculated correlation of portfolio returns with BTC. Range: -1 (opposite) to +1 (identical). Values near 1 indicate high market correlation."
+      category: "Risk"
+      business_context: "Correlation > 0.8 = highly correlated with BTC. Lower correlation = better diversification. Use to assess portfolio independence from Bitcoin dominance."
+      
+    # --- Drawdown KPIs ---
+    
+    - name: "Max Drawdown"
+      formula: "WINDOW_MIN((SUM([dmo_portfolio_positions].[Position Value]) - RUNNING_MAX(SUM([dmo_portfolio_positions].[Position Value]))) / RUNNING_MAX(SUM([dmo_portfolio_positions].[Position Value])))"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 2
+      description: "Max Drawdown - Largest peak-to-trough decline in portfolio value across the entire selected period. Answers: 'What was my worst losing streak?' Critical for understanding pain tolerance and position sizing. Always negative or zero. Uses WINDOW_MIN to find the minimum drawdown value."
+      category: "Risk"
+      table_calculation: true
+      compute_using: "Date"
+      threshold:
+        high: -0.30  # Alert if drawdown exceeds -30%
+      business_context: "Max Drawdown -30% = portfolio fell 30% from peak before recovering. Crypto typical: -30% to -80%. Compare against investor risk tolerance. Essential for risk management and capital preservation."
+      
+    - name: "Days Since Peak"
+      formula: "DATEDIFF('day', MAX([dmo_crypto_prices].[date]), TODAY())"
+      data_type: "integer"
+      format: "number"
+      precision: 0
+      description: "Days since the most recent data point - Simplified recovery time metric showing how many days have passed since the latest date in the dataset. Note: This is an approximation and may not accurately reflect true recovery time."
+      category: "Risk"
+      business_context: "Use as a rough indicator of data freshness and time since last observation. For accurate recovery time, consider pre-calculating in ETL pipeline."
+      
+    # --- Concentration KPIs ---
+    
+    - name: "Position Concentration (HHI)"
+      source_field: "dmo_kpi_concentration.portfolio_hhi"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "number"
+      precision: 4
+      description: "Herfindahl-Hirschman Index - Portfolio concentration measure. Pre-calculated in Python as sum of squared weights. Range 0-1 where 1 = all eggs in one basket, 0.10 = perfectly diversified across 10 assets."
+      category: "Risk"
+      threshold:
+        high: 0.30  # Alert if too concentrated
+      business_context: "HHI < 0.15 = well diversified, 0.15-0.30 = moderate, > 0.30 = concentrated (risky). Used by regulators to assess portfolio risk."
+        
+    - name: "Diversification Score"
+      formula: "(1 - Position Concentration (HHI)) * 100"
+      data_type: "decimal"
+      format: "number"
+      precision: 1
+      description: "Diversification Score - Inverse of HHI, scaled 0-100 for readability. Score 100 = perfectly diversified, 0 = single position. Easier to communicate than HHI: 'Your portfolio is 75% diversified.'"
+      category: "Risk"
+      threshold:
+        low: 60  # Below 60 needs improvement
+      business_context: "Target: > 70 for conservative, > 60 for balanced, > 50 for aggressive portfolios. Score < 60 triggers rebalancing recommendation."
+        
+    # --- Liquidity KPIs ---
+    
+    - name: "Liquid Assets %"
+      source_field: "dmo_kpi_concentration.portfolio_liquid_assets_pct"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 1
+      description: "Liquid Assets % - Percentage in highly liquid cryptos (BTC, ETH, major Layer 1s) that can be sold quickly without price impact. Pre-calculated in Python as sum of Layer 1 and Exchange Token position values divided by total portfolio value."
+      category: "Risk"
+      business_context: "Target: > 60% for institutional portfolios needing quick exit capability. Low liquidity = hard to sell in crashes. Trade-off with yield farming."
+      
+    # --- Performance KPIs ---
+    
+    - name: "Unrealized Gain/Loss"
+      formula: "SUM(Unrealized PnL)"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Unrealized Gain/Loss - Total 'paper' profit/loss across all open positions. Calculated as (Current Price - Cost Basis) × Quantity. Not realized until positions are sold."
+      category: "Performance"
+      business_context: "Positive = portfolio in profit overall. Use for performance attribution and tax planning. Large unrealized gains may trigger tax-loss harvesting for offsetting."
+      
+    - name: "Realized Gain/Loss YTD"
+      formula: "SUM(CASE WHEN Trade Type = 'SELL' THEN (Trade Price - Avg Cost) * Quantity END)"
+      data_type: "decimal"
+      format: "currency"
+      precision: 2
+      description: "Realized Gain/Loss YTD - Actual profit/loss from closed positions this year. Triggers tax liability. Only from SELL trades where gain/loss is 'locked in.' Critical for tax reporting."
+      category: "Performance"
+      business_context: "Used for tax estimates and quarterly reporting. Positive realized gains = tax bill coming. Manage via tax-loss harvesting strategies."
+      
+    # NOTE: Risk-Adjusted Return is essentially Sharpe Ratio without risk-free rate
+    # Users should use "Sharpe Ratio" instead, which is pre-calculated
+    # This KPI is commented out to avoid formula composition errors
+    # - name: "Risk-Adjusted Return"
+    #   formula: "[Portfolio Return (Annualized)] / [Portfolio Volatility (365d)]"
+    #   data_type: "decimal"
+    #   format: "number"
+    #   precision: 2
+    #   description: "Risk-Adjusted Return - Use 'Sharpe Ratio' instead for pre-calculated risk-adjusted returns."
+    #   category: "Performance"
+    
+    # --- Portfolio Allocation KPIs ---
+    
+    - name: "Current Weight"
+      source_field: "dmo_kpi_concentration.position_weight"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 4
+      description: "Current Weight - Actual portfolio allocation percentage for each position. Pre-calculated in Python for optimal performance. Result: 0.35 = 35% of portfolio."
+      category: "Portfolio Management"
+      business_context: "Compare to Target Weight to identify drift. If Current Weight (35%) vs Target Weight (30%) = 5% overweight. Indicates position has grown relative to portfolio."
+    
+    - name: "Weight Drift"
+      source_field: "dmo_kpi_concentration.weight_drift"
+      aggregation: "average"
+      data_type: "decimal"
+      format: "percentage"
+      precision: 4
+      description: "Weight Drift - Deviation from target allocation. Pre-calculated as (current_weight - target_weight). Positive = overweight (position too large), Negative = underweight (position too small). Absolute value indicates rebalancing urgency."
+      category: "Portfolio Management"
+      business_context: "Drift +10% = 10% overweight, needs selling. Drift -8% = 8% underweight, needs buying. Monitor to maintain strategic allocation and control risk."
+      threshold:
+        high: 0.10   # Alert if drift exceeds 10%
+        low: -0.10   # Alert if drift below -10%
+    
+    - name: "Needs Rebalance"
+      formula: "ABS([Weight Drift]) > 0.10"
+      data_type: "boolean"
+      format: "boolean"
+      description: "Needs Rebalance - Boolean flag indicating position requires rebalancing action. TRUE when absolute drift exceeds 10% threshold (configurable via rebalance_threshold business preference)."
+      category: "Portfolio Management"
+      business_context: "Use to filter positions requiring action. Triggers Agentforce rebalancing workflow. Count of TRUE values = number of positions needing adjustment."
+      
+  # =============================================================================
+  # BUSINESS PREFERENCES
+  # =============================================================================
+  
+  business_preferences:
+    
+    # --- Display & Formatting ---
+    
+    - name: "default_currency"
+      value: "USD"
+      type: "string"
+      description: "Display all monetary values in US Dollars"
+      category: "Formatting"
+      impact: "All price and value fields display in USD"
+      
+    - name: "default_date_range"
+      value: "Last 90 Days"
+      type: "string"
+      options: ["Last 30 Days", "Last 90 Days", "Last 365 Days", "YTD", "All Time"]
+      description: "Default time window for analysis and dashboards"
+      category: "Filtering"
+      impact: "Initial date filter on all dashboard loads"
+      
+    - name: "price_precision"
+      value: 2
+      type: "integer"
+      description: "Number of decimal places for price display"
+      category: "Formatting"
+      impact: "Affects readability for high-value cryptos (BTC, ETH)"
+      notes: "Use 8 for low-value coins if needed"
+      
+    - name: "percentage_precision"
+      value: 2
+      type: "integer"
+      description: "Number of decimal places for percentage values"
+      category: "Formatting"
+      impact: "Returns, weights, and volatility display"
+      
+    # --- Risk Management ---
+    
+    - name: "default_risk_metric"
+      value: "VaR 95%"
+      type: "string"
+      options: ["VaR 95%", "VaR 99%", "Portfolio Volatility (30d)", "Max Drawdown", "Sharpe Ratio"]
+      description: "Primary risk indicator shown in executive views"
+      category: "Risk"
+      impact: "Determines which risk KPI is prominently displayed"
+      
+    - name: "risk_threshold_high"
+      value: 0.25
+      type: "decimal"
+      description: "Alert threshold for high volatility (25% annualized)"
+      category: "Risk"
+      impact: "Portfolios above this volatility trigger red alerts"
+      
+    - name: "risk_threshold_medium"
+      value: 0.15
+      type: "decimal"
+      description: "Warning threshold for medium volatility (15% annualized)"
+      category: "Risk"
+      impact: "Portfolios above this show yellow warning indicators"
+      
+    - name: "concentration_alert"
+      value: 0.30
+      type: "decimal"
+      description: "Alert if any single position exceeds 30% of portfolio"
+      category: "Risk"
+      impact: "Triggers concentration risk warnings"
+      
+    - name: "correlation_threshold"
+      value: 0.80
+      type: "decimal"
+      description: "Flag assets with correlation above 0.80 as highly correlated"
+      category: "Risk"
+      impact: "Identifies assets that move together, reducing true diversification"
+      
+    - name: "rebalance_threshold"
+      value: 0.10
+      type: "decimal"
+      description: "Trigger rebalance recommendation if weight drift exceeds 10%"
+      category: "Portfolio Management"
+      impact: "Determines when Agentforce suggests portfolio rebalancing"
+      
+    # --- Benchmark & Calculation ---
+    
+    - name: "benchmark_asset"
+      value: "BTC"
+      type: "string"
+      options: ["BTC", "ETH", "Market Average"]
+      description: "Use Bitcoin as market benchmark for beta and correlation"
+      category: "Analysis"
+      impact: "Affects Beta calculation and performance comparisons"
+      
+    - name: "volatility_window"
+      value: 30
+      type: "integer"
+      options: [7, 14, 30, 60, 90]
+      description: "Number of days for rolling volatility calculation"
+      category: "Analysis"
+      impact: "Default window for volatility metrics in charts"
+      
+    - name: "var_confidence_level"
+      value: 0.95
+      type: "decimal"
+      options: [0.90, 0.95, 0.99]
+      description: "Confidence level for Value at Risk calculations (95%)"
+      category: "Risk"
+      impact: "Determines VaR percentile calculation"
+      
+    - name: "sharpe_risk_free_rate"
+      value: 0.02
+      type: "decimal"
+      description: "Annual risk-free rate for Sharpe ratio (2% = US Treasury)"
+      category: "Analysis"
+      impact: "Baseline return for risk-adjusted performance metrics"
+      
+    # --- Filtering & Display ---
+    
+    - name: "min_position_size"
+      value: 100
+      type: "decimal"
+      description: "Minimum position value in USD to display in reports ($100)"
+      category: "Filtering"
+      impact: "Hides dust/negligible positions from portfolio views"
+      
+    - name: "top_n_holdings"
+      value: 10
+      type: "integer"
+      description: "Number of top holdings to display in summary views"
+      category: "Display"
+      impact: "Limits portfolio position tables to top N by value"
+      
+    - name: "exclude_stablecoins"
+      value: true
+      type: "boolean"
+      description: "Exclude stablecoins from volatility and risk calculations"
+      category: "Analysis"
+      impact: "Removes USDT/USDC from risk metrics (as they should have 0 volatility)"
+      
+    # --- Portfolio Management ---
+    
+    - name: "default_aggregation"
+      value: "Portfolio Level"
+      type: "string"
+      options: ["Portfolio Level", "Individual Asset", "Category Level"]
+      description: "Default aggregation level for dashboard views"
+      category: "Display"
+      impact: "Determines initial drill-down level in charts"
+      
+    - name: "include_fees_in_returns"
+      value: true
+      type: "boolean"
+      description: "Factor in trading fees when calculating returns"
+      category: "Analysis"
+      impact: "More accurate but slightly lower performance metrics"
+      
+    - name: "alert_frequency"
+      value: "Daily"
+      type: "string"
+      options: ["Real-time", "Hourly", "Daily", "Weekly"]
+      description: "How often to check risk thresholds and send alerts"
+      category: "Notifications"
+      impact: "Frequency of Agentforce risk alert generation"
+      
+    # =============================================================================
+    # AGENT INSTRUCTIONS - All 50 business preferences consolidated
+    # =============================================================================
+    
+    - name: "agent_instructions"
+      value: |
+        # === TERMINOLOGY & INTERPRETATION ===
+        # When users say 'accounts', interpret as 'portfolios' (Conservative Growth, Balanced Portfolio, High Growth)
+        # When users say 'holdings', show portfolio positions with symbol, position value, and current weight
+        # When users ask for 'price', use close price from most recent date unless intraday context specified
+        # 'Largest' or 'smallest' portfolios refer to total portfolio value being highest/lowest respectively
+        # 'Most traded crypto' refers to total trade volume in USD, not trade count
+        # 'Liquid assets' are Layer 1 and Exchange Token categories (BTC, ETH, BNB, SOL, ADA, XRP, DOT)
+        
+        # === DEFAULT TIME PERIODS ===
+        # When asking about 'recent trades', return trades from the last 7 days by default
+        # 'Recent' performance means last 30 days; 'YTD' means year-to-date; 'since inception' means all-time
+        # When discussing volatility, default to 30-day unless context suggests otherwise
+        
+        # === SORTING & RANKING DEFAULTS ===
+        # When asking about positions, always sort by position value (descending) unless otherwise specified
+        # When ranking cryptocurrencies, default to sort by market cap tier unless specified
+        # Sort trades by date (most recent first) by default
+        # Sort portfolios by total value (largest first) by default
+        
+        # === RISK THRESHOLDS & INTERPRETATIONS ===
+        # 'High risk' portfolios have volatility > 25% or max drawdown > -30%
+        # 'Concentrated' portfolio has HHI > 0.30 or any single position > 30%
+        # 'Diversified' portfolio has HHI < 0.15 and no position > 20%
+        # Any single position > 30% of portfolio triggers concentration warning
+        # Sharpe Ratio > 1.0 = good risk-adjusted return; > 2.0 = excellent
+        # Beta > 1.2 = significantly more volatile than BTC; Beta < 0.8 = significantly less volatile
+        # Correlation > 0.7 = assets move together (low diversification benefit)
+        # Correlation < 0.3 = assets move independently (good diversification)
+        
+        # === POSITION WEIGHT THRESHOLDS ===
+        # 'Overweight' means current weight exceeds target weight by more than 10% (rebalance threshold)
+        # 'Underweight' means current weight is below target weight by more than 10%
+        # For rebalancing questions, show positions where abs(weight drift) > 10%
+        
+        # === VAR INTERPRETATION ===
+        # VaR losses are always displayed as negative values (e.g., VaR 95% = -$18.5K)
+        # VaR 95% interpretation: 'There is a 5% chance of losing more than this amount in a single day'
+        # Always state confidence level when showing VaR (e.g., '95% confidence' or '99% confidence')
+        
+        # === BETA INTERPRETATION ===
+        # Beta > 1.0 = more volatile than Bitcoin (benchmark); Beta < 1.0 = less volatile than BTC
+        # Bitcoin (BTC) is the default market benchmark for Beta calculations
+        
+        # === BOLLINGER BANDS THRESHOLDS ===
+        # BB %B > 1.0 = price above upper Bollinger Band (overbought signal)
+        # BB %B < 0.0 = price below lower Bollinger Band (oversold signal)
+        # BB %B between 0.0 and 1.0 = price within normal range
+        
+        # === DISPLAY & FORMATTING RULES ===
+        # When asking about positions, always return symbol, position value, and current weight
+        # When comparing performance, always show both absolute return and risk-adjusted return (Sharpe Ratio)
+        # Always include risk metrics (volatility or VaR) when discussing returns - never show returns alone
+        # When showing performance, always include both return % and Sharpe ratio for risk-adjusted view
+        # Include date when showing prices (e.g., 'as of Jan 9, 2026')
+        # Show per-portfolio breakdown when showing aggregated totals
+        # Show percentage of total when displaying individual portfolio values
+        
+        # === TAX & ACCOUNTING ===
+        # For tax questions, focus on Realized Gain/Loss YTD (from trades), not unrealized P&L
+        # Unrealized P&L = paper gains/losses; Realized = actual closed positions only
+      type: "string"
+      description: "Comprehensive AI agent instructions - 50 business preferences consolidated into actionable guidance for Concierge"
+      category: "Agent Behavior"
+      impact: "Primary instruction set shaping how Agentforce interprets all natural language queries about crypto portfolios"
+      
+  # =============================================================================
+  # FILTERS
+  # =============================================================================
+  
+  default_filters:
+    
+    - dimension: "Date"
+      source: "dmo_crypto_prices.date"
+      condition: "in_last"
+      value: 90
+      unit: "days"
+      
+    - dimension: "Is Stablecoin"
+      source: "dmo_cryptocurrency.is_stablecoin"
+      condition: "equals"
+      value: false
+      
+  # =============================================================================
+  # PARAMETERS
+  # =============================================================================
+  
+  parameters:
+    
+    - name: "Analysis Period"
+      type: "list"
+      values: ["30 Days", "90 Days", "180 Days", "1 Year", "All Time"]
+      default: "90 Days"
+      description: "Time period for analysis"
+      
+    - name: "Risk Level View"
+      type: "list"
+      values: ["Conservative Only", "Balanced Only", "Aggressive Only", "All Portfolios"]
+      default: "All Portfolios"
+      description: "Filter by portfolio risk tolerance"
+      
+    - name: "Benchmark Comparison"
+      type: "list"
+      values: ["BTC", "ETH", "Market Average", "None"]
+      default: "BTC"
+      description: "Asset to use for performance comparison"
+
+# =============================================================================
+# METADATA
+# =============================================================================
+
+metadata:
+  created_date: "2024-01-15"
+  last_modified: "2024-01-15"
+  created_by: "CryptoRisk Analytics Team"
+  version_notes: "Initial semantic layer configuration for Tableau Next Hackathon"
+  governance:
+    data_classification: "Internal"
+    refresh_frequency: "Daily at 2 AM UTC"
+    data_retention: "365 days"
+  
+  validation_rules:
+    - "All price measures must be > 0"
+    - "All percentage fields must be between -100% and +10000%"
+    - "Portfolio weights must sum to 1.0 per portfolio"
+    - "No NULL values in key dimensions"
+  
+  data_quality_score: 95  # Out of 100

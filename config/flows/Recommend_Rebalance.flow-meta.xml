@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <description>Analyzes portfolio drift and recommends rebalancing trades. Creates Rebalance_Task__c record with suggested actions.</description>
+    <label>Recommend Rebalance</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+    </start>
+    <status>Active</status>
+    
+    <!-- Input Variables -->
+    <variables>
+        <name>varPortfolioId</name>
+        <dataType>String</dataType>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <label>Portfolio ID</label>
+    </variables>
+    
+    <variables>
+        <name>varRebalanceThreshold</name>
+        <dataType>Number</dataType>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <label>Rebalance Threshold</label>
+        <scale>2</scale>
+        <value>
+            <numberValue>0.10</numberValue>
+        </value>
+    </variables>
+    
+    <!-- Output Variable -->
+    <variables>
+        <name>varTaskId</name>
+        <dataType>String</dataType>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+        <label>Rebalance Task ID</label>
+    </variables>
+    
+    <variables>
+        <name>varMaxDrift</name>
+        <dataType>Number</dataType>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <label>Maximum Drift</label>
+        <scale>4</scale>
+    </variables>
+    
+    <variables>
+        <name>varSuggestedTrades</name>
+        <dataType>String</dataType>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <label>Suggested Trades</label>
+    </variables>
+    
+    <!-- Screen 1: Select Portfolio -->
+    <screens>
+        <name>Select_Portfolio_Screen</name>
+        <label>Select Portfolio</label>
+        <locationX>176</locationX>
+        <locationY>134</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Get_Current_Positions</targetReference>
+        </connector>
+        <fields>
+            <name>Screen1_Header</name>
+            <fieldText>&lt;p style=&quot;font-size: 18px;&quot;&gt;&lt;b&gt;Portfolio Rebalancing Analysis&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Select a portfolio to analyze for rebalancing opportunities.&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
+            <name>Portfolio_Lookup</name>
+            <dataType>String</dataType>
+            <fieldText>Portfolio</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>true</isRequired>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    
+    <!-- Step 1: Get Current Positions -->
+    <recordLookups>
+        <name>Get_Current_Positions</name>
+        <label>Get Current Positions</label>
+        <locationX>176</locationX>
+        <locationY>278</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Calculate_Drift</targetReference>
+        </connector>
+        <object>Portfolio__c</object>
+        <queriedFields>Portfolio_ID__c</queriedFields>
+        <queriedFields>Total_Value__c</queriedFields>
+        <queriedFields>Risk_Tolerance__c</queriedFields>
+    </recordLookups>
+    
+    <!-- Step 2: Calculate Drift (would call Apex in real implementation) -->
+    <assignments>
+        <name>Calculate_Drift</name>
+        <label>Calculate Drift</label>
+        <locationX>176</locationX>
+        <locationY>422</locationY>
+        <assignmentItems>
+            <assignToReference>varMaxDrift</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <numberValue>0.15</numberValue>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>varSuggestedTrades</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>SELL 0.2 BTC (-5% weight), BUY $25,000 ETH (+3% weight), BUY $15,000 SOL (+2% weight)</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Check_Rebalance_Needed</targetReference>
+        </connector>
+    </assignments>
+    
+    <!-- Decision: Is Rebalancing Needed? -->
+    <decisions>
+        <name>Check_Rebalance_Needed</name>
+        <label>Check Rebalance Needed</label>
+        <locationX>176</locationX>
+        <locationY>566</locationY>
+        <defaultConnector>
+            <targetReference>No_Rebalance_Needed_Screen</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No Rebalance Needed</defaultConnectorLabel>
+        <rules>
+            <name>Rebalance_Needed</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>varMaxDrift</leftValueReference>
+                <operator>GreaterThan</operator>
+                <rightValue>
+                    <elementReference>varRebalanceThreshold</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Show_Suggested_Trades_Screen</targetReference>
+            </connector>
+            <label>Rebalance Needed</label>
+        </rules>
+    </decisions>
+    
+    <!-- Screen 2: Show Suggested Trades -->
+    <screens>
+        <name>Show_Suggested_Trades_Screen</name>
+        <label>Suggested Trades</label>
+        <locationX>50</locationX>
+        <locationY>710</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Create_Rebalance_Task</targetReference>
+        </connector>
+        <fields>
+            <name>Screen2_Header</name>
+            <fieldText>&lt;p style=&quot;font-size: 18px;&quot;&gt;&lt;b&gt;Rebalancing Recommended&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Maximum drift detected: &lt;b&gt;{!varMaxDrift}%&lt;/b&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
+            <name>Suggested_Trades_Display</name>
+            <fieldText>Suggested Trades:
+{!varSuggestedTrades}
+
+Expected Benefits:
+• Reduced volatility
+• Improved diversification
+• Aligned with target allocation
+
+Estimated Fees: $150</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    
+    <!-- Screen 3: No Rebalance Needed -->
+    <screens>
+        <name>No_Rebalance_Needed_Screen</name>
+        <label>No Rebalance Needed</label>
+        <locationX>302</locationX>
+        <locationY>710</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>Screen3_Header</name>
+            <fieldText>&lt;p style=&quot;font-size: 18px;&quot;&gt;&lt;b&gt;✅ Portfolio Aligned&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Your portfolio is within acceptable drift limits. No rebalancing needed at this time.&lt;/p&gt;&lt;p&gt;Maximum drift: &lt;b&gt;{!varMaxDrift}%&lt;/b&gt; (threshold: {!varRebalanceThreshold}%)&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    
+    <!-- Step 3: Create Rebalance Task -->
+    <recordCreates>
+        <name>Create_Rebalance_Task</name>
+        <label>Create Rebalance Task</label>
+        <locationX>50</locationX>
+        <locationY>854</locationY>
+        <assignRecordIdToReference>varTaskId</assignRecordIdToReference>
+        <connector>
+            <targetReference>Confirmation_Screen</targetReference>
+        </connector>
+        <object>Rebalance_Task__c</object>
+        <inputAssignments>
+            <field>Portfolio__c</field>
+            <value>
+                <elementReference>varPortfolioId</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Status__c</field>
+            <value>
+                <stringValue>Pending</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Rebalance_Reason__c</field>
+            <value>
+                <stringValue>Portfolio drift exceeds {!varRebalanceThreshold}%. Maximum drift: {!varMaxDrift}%</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Suggested_Trades__c</field>
+            <value>
+                <elementReference>varSuggestedTrades</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Estimated_Cost__c</field>
+            <value>
+                <numberValue>150.00</numberValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Priority__c</field>
+            <value>
+                <stringValue>Medium</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Expected_Benefit__c</field>
+            <value>
+                <stringValue>Reduced volatility, improved diversification, aligned with target allocation.</stringValue>
+            </value>
+        </inputAssignments>
+    </recordCreates>
+    
+    <!-- Screen 4: Confirmation -->
+    <screens>
+        <name>Confirmation_Screen</name>
+        <label>Confirmation</label>
+        <locationX>50</locationX>
+        <locationY>998</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>Screen4_Header</name>
+            <fieldText>&lt;p style=&quot;font-size: 18px;&quot;&gt;&lt;b&gt;✅ Rebalance Task Created&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Task ID: &lt;b&gt;{!varTaskId}&lt;/b&gt;&lt;/p&gt;&lt;p&gt;A rebalancing task has been created for review. You can view and approve it in the Risk Alert Center dashboard.&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    
+</Flow>
